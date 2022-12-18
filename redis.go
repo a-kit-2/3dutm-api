@@ -2,15 +2,15 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"encoding/json"
 	"net/http"
 
 	"github.com/go-redis/redis/v8"
 )
 
-type Data struct {
-	key   string
-	value string
+type RedisData struct {
+	Key string `json:"key"`
+	Val string `json:"val"`
 }
 
 func GetData(w http.ResponseWriter, r *http.Request) {
@@ -19,12 +19,11 @@ func GetData(w http.ResponseWriter, r *http.Request) {
 		Password: "",
 		DB:       0,
 	})
+
 	ctx := context.Background()
-	d := Data{
-		key:   "key1",
-		value: "value1",
-	}
-	val, err := c.Get(ctx, d.key).Result()
+
+	val, err := c.Get(ctx, "key1").Result()
+
 	switch {
 	case err == redis.Nil:
 		panic("key does not exist")
@@ -33,21 +32,30 @@ func GetData(w http.ResponseWriter, r *http.Request) {
 	case val == "":
 		panic("value is empty")
 	}
-	fmt.Println(d.key, val)
+
+	data := RedisData{
+		Key: "key1",
+		Val: val,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(data)
 }
 
 func RegisterData(w http.ResponseWriter, r *http.Request) {
+	data := RedisData{
+		Key: "time",
+		Val: "000100100101010100",
+	}
+
 	c := redis.NewClient(&redis.Options{
 		Addr:     "localhost:6379",
 		Password: "",
 		DB:       0,
 	})
 	ctx := context.Background()
-	d := Data{
-		key:   "key1",
-		value: "value1",
-	}
-	if err := c.Set(ctx, d.key, d.value, 0).Err(); err != nil {
+
+	if err := c.Set(ctx, data.Key, data.Val, 0).Err(); err != nil {
 		panic(err)
 	}
 }
