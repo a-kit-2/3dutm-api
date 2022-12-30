@@ -11,11 +11,6 @@ import (
 	"github.com/gorilla/mux"
 )
 
-type RedisData struct {
-	Key string `json:"key"`
-	Val string `json:"val"`
-}
-
 func redisClient() *redis.Client {
 	const ADDR string = "localhost:6379"
 	const PASSWORD string = ""
