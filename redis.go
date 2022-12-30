@@ -3,9 +3,12 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/go-redis/redis/v8"
+	"github.com/gorilla/mux"
 )
 
 type RedisData struct {
@@ -13,16 +16,28 @@ type RedisData struct {
 	Val string `json:"val"`
 }
 
-func GetData(w http.ResponseWriter, r *http.Request) {
+func redisClient() *redis.Client {
+	const ADDR string = "localhost:6379"
+	const PASSWORD string = ""
+	const DB int = 0
+
 	c := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
-		Password: "",
-		DB:       0,
+		Addr:     ADDR,
+		Password: PASSWORD,
+		DB:       DB,
 	})
 
+	return c
+}
+
+func GetData(w http.ResponseWriter, r *http.Request) {
+	c := redisClient()
 	ctx := context.Background()
 
-	val, err := c.Get(ctx, "key1").Result()
+	params := mux.Vars(r)
+	key := params["key"]
+
+	val, err := c.Get(ctx, key).Result()
 
 	switch {
 	case err == redis.Nil:
@@ -34,7 +49,7 @@ func GetData(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := RedisData{
-		Key: "key1",
+		Key: key,
 		Val: val,
 	}
 
@@ -43,19 +58,20 @@ func GetData(w http.ResponseWriter, r *http.Request) {
 }
 
 func RegisterData(w http.ResponseWriter, r *http.Request) {
-	data := RedisData{
-		Key: "time",
-		Val: "000100100101010100",
-	}
-
-	c := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
-		Password: "",
-		DB:       0,
-	})
+	c := redisClient()
 	ctx := context.Background()
 
-	if err := c.Set(ctx, data.Key, data.Val, 0).Err(); err != nil {
-		panic(err)
+	reqBody, _ := ioutil.ReadAll(r.Body)
+
+	var data []RedisData
+
+	if err := json.Unmarshal(reqBody, &data); err != nil {
+		fmt.Println(err)
+	}
+
+	for _, d := range data {
+		if err := c.Set(ctx, d.Key, d.Val, 0).Err(); err != nil {
+			panic(err)
+		}
 	}
 }

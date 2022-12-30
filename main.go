@@ -4,13 +4,16 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/rs/cors"
 )
 
 func main() {
 	r := mux.NewRouter()
 
-	r.HandleFunc("/getData", GetData).Methods("GET")
-	r.HandleFunc("/registerData", RegisterData).Methods("POST")
+	r.HandleFunc("/get/{key}", GetData).Methods("GET")
+	r.HandleFunc("/post", RegisterData).Methods("POST")
 
-	http.ListenAndServe(":8000", r)
+	c := cors.Default().Handler(r)
+
+	http.ListenAndServe(":8000", c)
 }
