@@ -32,15 +32,9 @@ func GetData(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	key := params["key"]
 
-	val, err := c.Get(ctx, key).Result()
-
-	switch {
-	case err == redis.Nil:
-		panic("key does not exist")
-	case err != nil:
-		panic(err)
-	case val == "":
-		panic("value is empty")
+	val, err := c.LRange(ctx, key, 0, -1).Result()
+	if err != nil {
+		fmt.Println("redis LRange Error:", err)
 	}
 
 	data := RedisData{
@@ -61,12 +55,13 @@ func RegisterData(w http.ResponseWriter, r *http.Request) {
 	var data []RedisData
 
 	if err := json.Unmarshal(reqBody, &data); err != nil {
-		fmt.Println(err)
+		panic(err)
 	}
 
 	for _, d := range data {
-		if err := c.Set(ctx, d.Key, d.Val, 0).Err(); err != nil {
-			panic(err)
+		err := c.RPush(ctx, d.Key, d.Val).Err()
+		if err != nil {
+			fmt.Println("redis RPush Error:", err)
 		}
 	}
 }
