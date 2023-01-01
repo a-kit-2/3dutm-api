@@ -34,13 +34,15 @@ func GetData(w http.ResponseWriter, r *http.Request) {
 
 	val, err := c.LRange(ctx, key, 0, -1).Result()
 	if err != nil {
-		fmt.Println("redis LRange Error:", err)
+		panic(err)
 	}
 
 	data := RedisData{
 		Key: key,
 		Val: val,
 	}
+
+	fmt.Println("Get data", data)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(data)
@@ -52,16 +54,16 @@ func RegisterData(w http.ResponseWriter, r *http.Request) {
 
 	reqBody, _ := ioutil.ReadAll(r.Body)
 
-	var data []RedisData
+	var data RedisData
 
 	if err := json.Unmarshal(reqBody, &data); err != nil {
 		panic(err)
 	}
 
-	for _, d := range data {
-		err := c.RPush(ctx, d.Key, d.Val).Err()
-		if err != nil {
-			fmt.Println("redis RPush Error:", err)
-		}
+	err := c.RPush(ctx, data.Key, data.Val).Err()
+	if err != nil {
+		panic(err)
 	}
+
+	fmt.Println("Register data", data)
 }
