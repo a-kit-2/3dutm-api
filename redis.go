@@ -6,20 +6,22 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
+	"strconv"
 
 	"github.com/go-redis/redis/v8"
 	"github.com/gorilla/mux"
 )
 
 func redisClient() *redis.Client {
-	const ADDR string = "localhost:6379"
-	const PASSWORD string = ""
-	const DB int = 0
+	addr := os.Getenv("ADDR")
+	password := os.Getenv("PASSWORD")
+	db, _ := strconv.Atoi(os.Getenv("DB"))
 
 	c := redis.NewClient(&redis.Options{
-		Addr:     ADDR,
-		Password: PASSWORD,
-		DB:       DB,
+		Addr:     addr,
+		Password: password,
+		DB:       db,
 	})
 
 	return c
