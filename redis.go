@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/go-redis/redis/v8"
 	"github.com/gorilla/mux"
@@ -44,7 +45,7 @@ func GetData(w http.ResponseWriter, r *http.Request) {
 		Val: val,
 	}
 
-	fmt.Println("Get data", data)
+	fmt.Println("Get data ", time.Now())
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(data)
@@ -67,5 +68,5 @@ func RegisterData(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	fmt.Println("Register data", data)
+	fmt.Println("Register data ", time.Now())
 }
